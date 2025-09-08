@@ -184,6 +184,29 @@ resource "azurerm_virtual_machine_extension" "domain_join" {
   }
 }
 
+resource "azurerm_virtual_machine_extension" "fslogix_config" {
+  count                = 2
+  name                 = "fslogix-config-${count.index + 1}"
+  virtual_machine_id   = azurerm_windows_virtual_machine.session_host[count.index].id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = jsonencode({
+    commandToExecute = "powershell -ExecutionPolicy Unrestricted -Command \"New-Item -ItemType Directory -Path 'C:\\FSLogix' -Force; Set-Content -Path 'C:\\FSLogix\\fslogix-config.ps1' -Value @'\nreg add HKLM\\SOFTWARE\\FSLogix\\Profiles /v Enabled /t REG_DWORD /d 1 /f\nreg add HKLM\\SOFTWARE\\FSLogix\\Profiles /v VHDLocations /t REG_MULTI_SZ /d \\\\${azurerm_storage_account.fslogix.name}.file.core.windows.net\\${azurerm_storage_share.fslogix_profiles.name} /f\nreg add HKLM\\SOFTWARE\\FSLogix\\Profiles /v VolumeType /t REG_MULTI_SZ /d VHDX /f\nreg add HKLM\\SOFTWARE\\FSLogix\\Profiles /v SizeInMBs /t REG_DWORD /d 30000 /f\nreg add HKLM\\SOFTWARE\\FSLogix\\Profiles /v IsDynamic /t REG_DWORD /d 1 /f\nreg add HKLM\\SOFTWARE\\FSLogix\\Profiles /v LockedRetryCount /t REG_DWORD /d 12 /f\nreg add HKLM\\SOFTWARE\\FSLogix\\Profiles /v LockedRetryInterval /t REG_DWORD /d 5 /f\n'@; Start-Process powershell -ArgumentList '-File C:\\FSLogix\\fslogix-config.ps1' -Wait\""
+  })
+
+  depends_on = [
+    azurerm_virtual_machine_extension.aad_join,
+    azurerm_virtual_machine_extension.domain_join
+  ]
+
+  tags = {
+    Environment = var.environment
+    Customer    = var.customer_name
+  }
+}
+
 resource "azurerm_virtual_machine_extension" "avd_agent" {
   count                = 2
   name                 = "avd-agent-${count.index + 1}"
@@ -201,10 +224,7 @@ resource "azurerm_virtual_machine_extension" "avd_agent" {
     }
   })
 
-  depends_on = [
-    azurerm_virtual_machine_extension.aad_join,
-    azurerm_virtual_machine_extension.domain_join
-  ]
+  depends_on = [azurerm_virtual_machine_extension.fslogix_config]
 
   tags = {
     Environment = var.environment
@@ -359,7 +379,7 @@ resource "azurerm_storage_account" "fslogix" {
 
 resource "azurerm_storage_share" "fslogix_profiles" {
   name                 = "fslogix-profiles"
-  storage_account_name = azurerm_storage_account.fslogix.name
+  storage_account_id   = azurerm_storage_account.fslogix.id
   quota                = var.fslogix_share_size_gb
 
   metadata = {
