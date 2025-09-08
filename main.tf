@@ -234,3 +234,38 @@ resource "azurerm_virtual_desktop_scaling_plan" "pooled" {
     Customer    = var.customer_name
   }
 }
+
+resource "azurerm_virtual_desktop_application_group" "desktop" {
+  name                = "dag-${local.resource_prefix}-desktop"
+  location            = azurerm_resource_group.avd.location
+  resource_group_name = azurerm_resource_group.avd.name
+
+  type          = "Desktop"
+  host_pool_id  = azurerm_virtual_desktop_host_pool.pooled.id
+  friendly_name = "Desktop Application Group"
+  description   = "Desktop Application Group for ${local.resource_prefix}"
+
+  tags = {
+    Environment = var.environment
+    Customer    = var.customer_name
+  }
+}
+
+resource "azurerm_virtual_desktop_workspace" "workspace" {
+  name                = "ws-${local.resource_prefix}-avd"
+  location            = azurerm_resource_group.avd.location
+  resource_group_name = azurerm_resource_group.avd.name
+
+  friendly_name = "${local.resource_prefix} AVD Workspace"
+  description   = "AVD Workspace for ${local.resource_prefix}"
+
+  tags = {
+    Environment = var.environment
+    Customer    = var.customer_name
+  }
+}
+
+resource "azurerm_virtual_desktop_workspace_application_group_association" "workspace_app_group" {
+  workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
+  application_group_id = azurerm_virtual_desktop_application_group.desktop.id
+}
