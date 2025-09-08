@@ -72,6 +72,41 @@ variable "storage_account_replication_type" {
   default     = "LRS"
 }
 
+variable "domain_join_type" {
+  description = "Type of domain join: 'aad' for Azure AD join or 'ad' for traditional AD domain join"
+  type        = string
+  default     = "aad"
+  validation {
+    condition     = contains(["aad", "ad"], var.domain_join_type)
+    error_message = "Domain join type must be either 'aad' or 'ad'."
+  }
+}
+
+variable "domain_name" {
+  description = "Domain name for traditional AD join (only used when domain_join_type is 'ad')"
+  type        = string
+  default     = ""
+}
+
+variable "domain_ou_path" {
+  description = "OU path for domain join (only used when domain_join_type is 'ad')"
+  type        = string
+  default     = ""
+}
+
+variable "domain_admin_username" {
+  description = "Domain administrator username for AD join (only used when domain_join_type is 'ad')"
+  type        = string
+  default     = ""
+}
+
+variable "domain_admin_password" {
+  description = "Domain administrator password for AD join (only used when domain_join_type is 'ad')"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 locals {
   resource_prefix = "${var.customer_name}-${var.environment}"
   resource_group_name = var.resource_group_name != "" ? var.resource_group_name : "rg-${local.resource_prefix}-avd"

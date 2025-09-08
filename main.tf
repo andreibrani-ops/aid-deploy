@@ -145,6 +145,45 @@ resource "azurerm_windows_virtual_machine" "session_host" {
   }
 }
 
+resource "azurerm_virtual_machine_extension" "aad_join" {
+  count                = var.domain_join_type == "aad" ? 2 : 0
+  name                 = "aad-join-${count.index + 1}"
+  virtual_machine_id   = azurerm_windows_virtual_machine.session_host[count.index].id
+  publisher            = "Microsoft.Azure.ActiveDirectory"
+  type                 = "AADLoginForWindows"
+  type_handler_version = "1.0"
+
+  tags = {
+    Environment = var.environment
+    Customer    = var.customer_name
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "domain_join" {
+  count                = var.domain_join_type == "ad" ? 2 : 0
+  name                 = "domain-join-${count.index + 1}"
+  virtual_machine_id   = azurerm_windows_virtual_machine.session_host[count.index].id
+  publisher            = "Microsoft.Compute"
+  type                 = "JsonADDomainExtension"
+  type_handler_version = "1.3"
+
+  settings = jsonencode({
+    Name    = var.domain_name
+    OUPath  = var.domain_ou_path
+    User    = var.domain_admin_username
+    Restart = "true"
+  })
+
+  protected_settings = jsonencode({
+    Password = var.domain_admin_password
+  })
+
+  tags = {
+    Environment = var.environment
+    Customer    = var.customer_name
+  }
+}
+
 resource "azurerm_virtual_machine_extension" "avd_agent" {
   count                = 2
   name                 = "avd-agent-${count.index + 1}"
@@ -161,6 +200,11 @@ resource "azurerm_virtual_machine_extension" "avd_agent" {
       registrationInfoToken = azurerm_virtual_desktop_host_pool_registration_info.pooled.token
     }
   })
+
+  depends_on = [
+    azurerm_virtual_machine_extension.aad_join,
+    azurerm_virtual_machine_extension.domain_join
+  ]
 
   tags = {
     Environment = var.environment
