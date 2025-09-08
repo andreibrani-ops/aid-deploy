@@ -269,3 +269,15 @@ resource "azurerm_virtual_desktop_workspace_application_group_association" "work
   workspace_id         = azurerm_virtual_desktop_workspace.workspace.id
   application_group_id = azurerm_virtual_desktop_application_group.desktop.id
 }
+
+resource "azuread_group" "avd_users" {
+  display_name     = local.avd_users_group_name
+  description      = "AVD Users group for ${local.resource_prefix} environment"
+  security_enabled = true
+}
+
+resource "azurerm_role_assignment" "desktop_virtualization_user" {
+  scope                = azurerm_virtual_desktop_application_group.desktop.id
+  role_definition_name = "Desktop Virtualization User"
+  principal_id         = azuread_group.avd_users.object_id
+}

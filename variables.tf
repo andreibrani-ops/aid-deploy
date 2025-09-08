@@ -48,7 +48,14 @@ variable "time_zone" {
   default     = "W. Europe Standard Time"
 }
 
+variable "avd_users_group_name" {
+  description = "Name of the Azure AD group for AVD users"
+  type        = string
+  default     = ""
+}
+
 locals {
   resource_prefix = "${var.customer_name}-${var.environment}"
   resource_group_name = var.resource_group_name != "" ? var.resource_group_name : "rg-${local.resource_prefix}-avd"
+  avd_users_group_name = var.avd_users_group_name != "" ? var.avd_users_group_name : "AVD-Users-${local.resource_prefix}"
 }
