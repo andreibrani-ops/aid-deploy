@@ -1,0 +1,33 @@
+# Environment Configuration
+environment = "dev"
+customer_name = "contoso"
+location = "West Europe"
+
+# Resource Group (optional - will be auto-generated if not specified)
+# resource_group_name = "rg-contoso-dev-avd"
+
+# Virtual Machine Configuration
+vm_size = "Standard_D2s_v3"
+admin_username = "avdadmin"
+admin_password = "YourSecurePassword123!"
+
+# Time Zone for Scaling Plan
+time_zone = "W. Europe Standard Time"
+
+# Azure AD Group for AVD Users (optional - will be auto-generated if not specified)
+# avd_users_group_name = "AVD-Users-contoso-dev"
+
+# FSLogix Storage Configuration
+fslogix_share_size_gb = 100
+storage_account_tier = "Standard"
+storage_account_replication_type = "LRS"
+
+# Domain Join Configuration
+# Options: "aad" for Azure AD join (recommended) or "ad" for traditional AD domain join
+domain_join_type = "aad"
+
+# Traditional AD Domain Join Settings (only required if domain_join_type = "ad")
+# domain_name = "contoso.local"
+# domain_ou_path = "OU=AVD,DC=contoso,DC=local"
+# domain_admin_username = "contoso\\avdadmin"
+# domain_admin_password = "YourDomainAdminPassword!"
