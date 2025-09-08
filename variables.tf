@@ -42,6 +42,12 @@ variable "admin_password" {
   sensitive   = true
 }
 
+variable "time_zone" {
+  description = "Time zone for scaling schedules"
+  type        = string
+  default     = "W. Europe Standard Time"
+}
+
 locals {
   resource_prefix = "${var.customer_name}-${var.environment}"
   resource_group_name = var.resource_group_name != "" ? var.resource_group_name : "rg-${local.resource_prefix}-avd"

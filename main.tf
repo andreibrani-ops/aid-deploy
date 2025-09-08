@@ -167,3 +167,70 @@ resource "azurerm_virtual_machine_extension" "avd_agent" {
     Customer    = var.customer_name
   }
 }
+
+resource "azurerm_virtual_desktop_scaling_plan" "pooled" {
+  name                = "sp-${local.resource_prefix}-pooled"
+  location            = azurerm_resource_group.avd.location
+  resource_group_name = azurerm_resource_group.avd.name
+  friendly_name       = "Scaling plan for ${local.resource_prefix} pooled desktop"
+  description         = "Scaling plan for pooled desktop environment"
+  time_zone           = var.time_zone
+
+  schedule {
+    name                                 = "weekdays_schedule"
+    days_of_week                         = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    ramp_up_start_time                   = "07:00"
+    ramp_up_load_balancing_algorithm     = "DepthFirst"
+    ramp_up_minimum_hosts_percent        = 50
+    ramp_up_capacity_threshold_percent   = 60
+
+    peak_start_time                      = "09:00"
+    peak_load_balancing_algorithm        = "DepthFirst"
+
+    ramp_down_start_time                 = "18:00"
+    ramp_down_load_balancing_algorithm   = "DepthFirst"
+    ramp_down_minimum_hosts_percent      = 25
+    ramp_down_capacity_threshold_percent = 50
+    ramp_down_force_logoff_users         = false
+    ramp_down_stop_hosts_when            = "ZeroActiveSessions"
+    ramp_down_wait_time_minutes          = 45
+    ramp_down_notification_message       = "You will be logged off in 45 min. Make sure to save your work."
+
+    off_peak_start_time                  = "20:00"
+    off_peak_load_balancing_algorithm    = "DepthFirst"
+  }
+
+  schedule {
+    name                                 = "weekends_schedule"
+    days_of_week                         = ["Saturday", "Sunday"]
+    ramp_up_start_time                   = "09:00"
+    ramp_up_load_balancing_algorithm     = "DepthFirst"
+    ramp_up_minimum_hosts_percent        = 25
+    ramp_up_capacity_threshold_percent   = 60
+
+    peak_start_time                      = "10:00"
+    peak_load_balancing_algorithm        = "DepthFirst"
+
+    ramp_down_start_time                 = "18:00"
+    ramp_down_load_balancing_algorithm   = "DepthFirst"
+    ramp_down_minimum_hosts_percent      = 10
+    ramp_down_capacity_threshold_percent = 50
+    ramp_down_force_logoff_users         = false
+    ramp_down_stop_hosts_when            = "ZeroActiveSessions"
+    ramp_down_wait_time_minutes          = 45
+    ramp_down_notification_message       = "You will be logged off in 45 min. Make sure to save your work."
+
+    off_peak_start_time                  = "20:00"
+    off_peak_load_balancing_algorithm    = "DepthFirst"
+  }
+
+  host_pool {
+    hostpool_id          = azurerm_virtual_desktop_host_pool.pooled.id
+    scaling_plan_enabled = true
+  }
+
+  tags = {
+    Environment = var.environment
+    Customer    = var.customer_name
+  }
+}
