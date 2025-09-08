@@ -54,6 +54,24 @@ variable "avd_users_group_name" {
   default     = ""
 }
 
+variable "fslogix_share_size_gb" {
+  description = "Size of the FSLogix file share in GB"
+  type        = number
+  default     = 100
+}
+
+variable "storage_account_tier" {
+  description = "Performance tier of the storage account"
+  type        = string
+  default     = "Standard"
+}
+
+variable "storage_account_replication_type" {
+  description = "Replication type for the storage account"
+  type        = string
+  default     = "LRS"
+}
+
 locals {
   resource_prefix = "${var.customer_name}-${var.environment}"
   resource_group_name = var.resource_group_name != "" ? var.resource_group_name : "rg-${local.resource_prefix}-avd"

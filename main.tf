@@ -281,3 +281,51 @@ resource "azurerm_role_assignment" "desktop_virtualization_user" {
   role_definition_name = "Desktop Virtualization User"
   principal_id         = azuread_group.avd_users.object_id
 }
+
+resource "random_string" "storage_suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
+resource "azurerm_storage_account" "fslogix" {
+  name                = "st${replace(local.resource_prefix, "-", "")}${random_string.storage_suffix.result}"
+  resource_group_name = azurerm_resource_group.avd.name
+  location            = azurerm_resource_group.avd.location
+
+  account_tier             = var.storage_account_tier
+  account_replication_type = var.storage_account_replication_type
+  account_kind             = "StorageV2"
+
+  https_traffic_only_enabled = true
+  min_tls_version           = "TLS1_2"
+
+  network_rules {
+    default_action             = "Deny"
+    virtual_network_subnet_ids = [azurerm_subnet.avd.id]
+    bypass                     = ["AzureServices"]
+  }
+
+  tags = {
+    Environment = var.environment
+    Customer    = var.customer_name
+    Purpose     = "FSLogix"
+  }
+}
+
+resource "azurerm_storage_share" "fslogix_profiles" {
+  name                 = "fslogix-profiles"
+  storage_account_name = azurerm_storage_account.fslogix.name
+  quota                = var.fslogix_share_size_gb
+
+  metadata = {
+    environment = var.environment
+    customer    = var.customer_name
+  }
+}
+
+resource "azurerm_role_assignment" "fslogix_storage_contributor" {
+  scope                = azurerm_storage_account.fslogix.id
+  role_definition_name = "Storage File Data SMB Share Contributor"
+  principal_id         = azuread_group.avd_users.object_id
+}
